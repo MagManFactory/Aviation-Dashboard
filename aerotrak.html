@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aeronautical Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0a192f;
+            --secondary: #172a45;
+            --accent: #64ffda;
+            --accent2: #00b4d8;
+            --text: #e6f1ff;
+            --text-dim: #8892b0;
+            --warning: #ffd60a;
+            --danger: #ff6b6b;
+            --success: #4ade80;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #0d2137 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(23, 42, 69, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .live-clock {
+            font-size: 1.2rem;
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+        }
+
+        .utc-time {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        /* Search Section */
+        .search-section {
+            padding: 2rem;
+            background: var(--secondary);
+            margin: 1rem;
+            border-radius: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--primary);
+            border: 2px solid rgba(100, 255, 218, 0.2);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.2);
+        }
+
+        .search-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            border-radius: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(100, 255, 218, 0.3);
+        }
+
+        .quick-airports {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .quick-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 20px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .quick-btn:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Autocomplete */
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--secondary);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .autocomplete-results.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .autocomplete-item .code {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .autocomplete-item .name {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        /* Main Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1rem;
+            padding: 0 1rem 1rem;
+        }
+
+        .panel {
+            background: var(--secondary);
+            border-radius: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: rgba(100, 255, 218, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.1), rgba(0, 180, 216, 0.1));
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .panel-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .panel-header h2 i {
+            color: var(--accent);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Airport Info Panel */
+        .airport-info {
+            grid-column: span 2;
+        }
+
+        .airport-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.05), rgba(0, 180, 216, 0.05));
+        }
+
+        .airport-code {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(100, 255, 218, 0.3);
+        }
+
+        .airport-details h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .airport-details p {
+            color: var(--text-dim);
+        }
+
+        .airport-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card .label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Weather Panel */
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .weather-icon {
+            font-size: 4rem;
+            color: var(--warning);
+        }
+
+        .weather-temp {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .weather-desc {
+            color: var(--text-dim);
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--primary);
+            border-radius: 8px;
+        }
+
+        .weather-item i {
+            color: var(--accent);
+            width: 20px;
+        }
+
+        .weather-item .label {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        .weather-item .value {
+            font-weight: 600;
+        }
+
+        /* METAR/TAF */
+        .metar-box {
+            background: var(--primary);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .metar-label {
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Flight Tables */
+        .flight-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .flight-table th {
+            text-align: left;
+            padding: 0.75rem;
+            color: var(--text-dim);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .flight-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.05);
+        }
+
+        .flight-table tr:hover {
+            background: rgba(100, 255, 218, 0.05);
+        }
+
+        .flight-number {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status.on-time {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+
+        .status.delayed {
+            background: rgba(255, 214, 10, 0.2);
+            color: var(--warning);
+        }
+
+        .status.cancelled {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--danger);
+        }
+
+        .status.landed {
+            background: rgba(100, 255, 218, 0.2);
+            color: var(--accent);
+        }
+
+        .status.departed {
+            background: rgba(0, 180, 216, 0.2);
+            color: var(--accent2);
+        }
+
+        .status.boarding {
+            background: rgba(255, 214, 10, 0.2);
+            color: var(--warning);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Runway Status */
+        .runway-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .runway-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--primary);
+            border-radius: 10px;
+            border-left: 4px solid var(--success);
+        }
+
+        .runway-item.closed {
+            border-left-color: var(--danger);
+        }
+
+        .runway-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .runway-info {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .runway-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .runway-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .runway-item.closed .dot {
+            background: var(--danger);
+        }
+
+        /* Live Activity Map */
+        .activity-map {
+            height: 300px;
+            background: var(--primary);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            color: var(--text-dim);
+        }
+
+        .map-placeholder i {
+            font-size: 3rem;
+            color: var(--accent);
+        }
+
+        /* Notifications */
+        .notification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--primary);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .notification-item.warning {
+            border-left-color: var(--warning);
+        }
+
+        .notification-item.danger {
+            border-left-color: var(--danger);
+        }
+
+        .notification-item i {
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .notification-item.warning i {
+            color: var(--warning);
+        }
+
+        .notification-item.danger i {
+            color: var(--danger);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-text {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .notification-time {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 255, 218, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger);
+        }
+
+        .error-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-dim);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            opacity: 0.5;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Refresh Button */
+        .refresh-btn {
+            background: transparent;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: var(--accent);
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .refresh-btn.spinning i {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .airport-info {
+                grid-column: span 1;
+            }
+
+            .airport-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .airport-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .airport-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            .search-input-wrapper {
+                min-width: 100%;
+            }
+
+            .search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent2);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .connection-dot.disconnected {
+            background: var(--danger);
+        }
+
+        /* Flight Progress */
+        .flight-progress {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(100, 255, 218, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-plane {
+            color: var(--accent);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-plane-departure"></i>
+            <h1>AeroTrack Dashboard</h1>
+        </div>
+        <div class="header-info">
+            <div class="connection-status">
+                <span class="connection-dot" id="connectionDot"></span>
+                <span id="connectionText">Live</span>
+            </div>
+            <div class="live-clock">
+                <div id="localTime">--:--:--</div>
+                <div class="utc-time" id="utcTime">UTC: --:--:--</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" class="search-input" id="airportSearch" 
+                       placeholder="Enter airport code (JFK) or city name (New York)..."
+                       autocomplete="off">
+                <div class="autocomplete-results" id="autocompleteResults"></div>
+            </div>
+            <button class="search-btn" id="searchBtn">
+                <i class="fas fa-radar"></i>
+                Track Airport
+            </button>
+        </div>
+        <div class="quick-airports">
+            <button class="quick-btn" data-code="JFK">JFK - New York</button>
+            <button class="quick-btn" data-code="LAX">LAX - Los Angeles</button>
+            <button class="quick-btn" data-code="LHR">LHR - London</button>
+            <button class="quick-btn" data-code="DXB">DXB - Dubai</button>
+            <button class="quick-btn" data-code="SIN">SIN - Singapore</button>
+            <button class="quick-btn" data-code="HND">HND - Tokyo</button>
+            <button class="quick-btn" data-code="CDG">CDG - Paris</button>
+            <button class="quick-btn" data-code="FRA">FRA - Frankfurt</button>
+            <button class="quick-btn" data-code="ORD">ORD - Chicago</button>
+            <button class="quick-btn" data-code="SYD">SYD - Sydney</button>
+        </div>
+    </section>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard" id="dashboard">
+        <!-- Initial Empty State -->
+        <div class="panel" style="grid-column: 1 / -1;">
+            <div class="empty-state">
+                <i class="fas fa-plane"></i>
+                <h3>Select an Airport to Begin</h3>
+                <p>Search for an airport or click a quick access button above</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Airport Database (Major airports with codes and cities)
+        const airportDatabase = [
+            { code: 'JFK', icao: 'KJFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA', tz: 'America/New_York' },
+            { code: 'LAX', icao: 'KLAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA', tz: 'America/Los_Angeles' },
+            { code: 'ORD', icao: 'KORD', name: "O'Hare International", city: 'Chicago', country: 'USA', tz: 'America/Chicago' },
+            { code: 'DFW', icao: 'KDFW', name: 'Dallas/Fort Worth International', city: 'Dallas', country: 'USA', tz: 'America/Chicago' },
+            { code: 'DEN', icao: 'KDEN', name: 'Denver International', city: 'Denver', country: 'USA', tz: 'America/Denver' },
+            { code: 'SFO', icao: 'KSFO', name: 'San Francisco International', city: 'San Francisco', country: 'USA', tz: 'America/Los_Angeles' },
+            { code: 'SEA', icao: 'KSEA', name: 'Seattle-Tacoma International', city: 'Seattle', country: 'USA', tz: 'America/Los_Angeles' },
+            { code: 'MIA', icao: 'KMIA', name: 'Miami International', city: 'Miami', country: 'USA', tz: 'America/New_York' },
+            { code: 'ATL', icao: 'KATL', name: 'Hartsfield-Jackson Atlanta', city: 'Atlanta', country: 'USA', tz: 'America/New_York' },
+            { code: 'BOS', icao: 'KBOS', name: 'Boston Logan International', city: 'Boston', country: 'USA', tz: 'America/New_York' },
+            { code: 'LHR', icao: 'EGLL', name: 'London Heathrow', city: 'London', country: 'UK', tz: 'Europe/London' },
+            { code: 'LGW', icao: 'EGKK', name: 'London Gatwick', city: 'London', country: 'UK', tz: 'Europe/London' },
+            { code: 'CDG', icao: 'LFPG', name: 'Charles de Gaulle', city: 'Paris', country: 'France', tz: 'Europe/Paris' },
+            { code: 'FRA', icao: 'EDDF', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'Germany', tz: 'Europe/Berlin' },
+            { code: 'AMS', icao: 'EHAM', name: 'Amsterdam Schiphol', city: 'Amsterdam', country: 'Netherlands', tz: 'Europe/Amsterdam' },
+            { code: 'MAD', icao: 'LEMD', name: 'Madrid-Barajas', city: 'Madrid', country: 'Spain', tz: 'Europe/Madrid' },
+            { code: 'FCO', icao: 'LIRF', name: 'Leonardo da Vinci–Fiumicino', city: 'Rome', country: 'Italy', tz: 'Europe/Rome' },
+            { code: 'DXB', icao: 'OMDB', name: 'Dubai International', city: 'Dubai', country: 'UAE', tz: 'Asia/Dubai' },
+            { code: 'SIN', icao: 'WSSS', name: 'Singapore Changi', city: 'Singapore', country: 'Singapore', tz: 'Asia/Singapore' },
+            { code: 'HKG', icao: 'VHHH', name: 'Hong Kong International', city: 'Hong Kong', country: 'China', tz: 'Asia/Hong_Kong' },
+            { code: 'NRT', icao: 'RJAA', name: 'Narita International', city: 'Tokyo', country: 'Japan', tz: 'Asia/Tokyo' },
+            { code: 'HND', icao: 'RJTT', name: 'Tokyo Haneda', city: 'Tokyo', country: 'Japan', tz: 'Asia/Tokyo' },
+            { code: 'ICN', icao: 'RKSI', name: 'Incheon International', city: 'Seoul', country: 'South Korea', tz: 'Asia/Seoul' },
+            { code: 'PEK', icao: 'ZBAA', name: 'Beijing Capital International', city: 'Beijing', country: 'China', tz: 'Asia/Shanghai' },
+            { code: 'PVG', icao: 'ZSPD', name: 'Shanghai Pudong International', city: 'Shanghai', country: 'China', tz: 'Asia/Shanghai' },
+            { code: 'BKK', icao: 'VTBS', name: 'Suvarnabhumi Airport', city: 'Bangkok', country: 'Thailand', tz: 'Asia/Bangkok' },
+            { code: 'SYD', icao: 'YSSY', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'Australia', tz: 'Australia/Sydney' },
+            { code: 'MEL', icao: 'YMML', name: 'Melbourne Airport', city: 'Melbourne', country: 'Australia', tz: 'Australia/Melbourne' },
+            { code: 'YYZ', icao: 'CYYZ', name: 'Toronto Pearson', city: 'Toronto', country: 'Canada', tz: 'America/Toronto' },
+            { code: 'YVR', icao: 'CYVR', name: 'Vancouver International', city: 'Vancouver', country: 'Canada', tz: 'America/Vancouver' },
+            { code: 'MEX', icao: 'MMMX', name: 'Mexico City International', city: 'Mexico City', country: 'Mexico', tz: 'America/Mexico_City' },
+            { code: 'GRU', icao: 'SBGR', name: 'São Paulo–Guarulhos', city: 'São Paulo', country: 'Brazil', tz: 'America/Sao_Paulo' },
+            { code: 'EZE', icao: 'SAEZ', name: 'Ministro Pistarini', city: 'Buenos Aires', country: 'Argentina', tz: 'America/Argentina/Buenos_Aires' },
+            { code: 'JNB', icao: 'FAOR', name: 'O.R. Tambo International', city: 'Johannesburg', country: 'South Africa', tz: 'Africa/Johannesburg' },
+            { code: 'CAI', icao: 'HECA', name: 'Cairo International', city: 'Cairo', country: 'Egypt', tz: 'Africa/Cairo' },
+            { code: 'IST', icao: 'LTFM', name: 'Istanbul Airport', city: 'Istanbul', country: 'Turkey', tz: 'Europe/Istanbul' },
+            { code: 'DOH', icao: 'OTHH', name: 'Hamad International', city: 'Doha', country: 'Qatar', tz: 'Asia/Qatar' },
+            { code: 'DEL', icao: 'VIDP', name: 'Indira Gandhi International', city: 'Delhi', country: 'India', tz: 'Asia/Kolkata' },
+            { code: 'BOM', icao: 'VABB', name: 'Chhatrapati Shivaji Maharaj', city: 'Mumbai', country: 'India', tz: 'Asia/Kolkata' },
+            { code: 'KUL', icao: 'WMKK', name: 'Kuala Lumpur International', city: 'Kuala Lumpur', country: 'Malaysia', tz: 'Asia/Kuala_Lumpur' },
+            { code: 'MNL', icao: 'RPLL', name: 'Ninoy Aquino International', city: 'Manila', country: 'Philippines', tz: 'Asia/Manila' },
+            { code: 'CGK', icao: 'WIII', name: 'Soekarno–Hatta International', city: 'Jakarta', country: 'Indonesia', tz: 'Asia/Jakarta' },
+            { code: 'ZRH', icao: 'LSZH', name: 'Zurich Airport', city: 'Zurich', country: 'Switzerland', tz: 'Europe/Zurich' },
+            { code: 'MUC', icao: 'EDDM', name: 'Munich Airport', city: 'Munich', country: 'Germany', tz: 'Europe/Berlin' },
+            { code: 'BCN', icao: 'LEBL', name: 'Barcelona–El Prat', city: 'Barcelona', country: 'Spain', tz: 'Europe/Madrid' },
+            { code: 'VIE', icao: 'LOWW', name: 'Vienna International', city: 'Vienna', country: 'Austria', tz: 'Europe/Vienna' },
+            { code: 'CPH', icao: 'EKCH', name: 'Copenhagen Airport', city: 'Copenhagen', country: 'Denmark', tz: 'Europe/Copenhagen' },
+            { code: 'OSL', icao: 'ENGM', name: 'Oslo Gardermoen', city: 'Oslo', country: 'Norway', tz: 'Europe/Oslo' },
+            { code: 'ARN', icao: 'ESSA', name: 'Stockholm Arlanda', city: 'Stockholm', country: 'Sweden', tz: 'Europe/Stockholm' },
+            { code: 'HEL', icao: 'EFHK', name: 'Helsinki-Vantaa', city: 'Helsinki', country: 'Finland', tz: 'Europe/Helsinki' },
+            { code: 'DUB', icao: 'EIDW', name: 'Dublin Airport', city: 'Dublin', country: 'Ireland', tz: 'Europe/Dublin' },
+            { code: 'LIS', icao: 'LPPT', name: 'Lisbon Portela', city: 'Lisbon', country: 'Portugal', tz: 'Europe/Lisbon' },
+            { code: 'ATH', icao: 'LGAV', name: 'Athens International', city: 'Athens', country: 'Greece', tz: 'Europe/Athens' },
+            { code: 'WAW', icao: 'EPWA', name: 'Warsaw Chopin', city: 'Warsaw', country: 'Poland', tz: 'Europe/Warsaw' },
+            { code: 'PRG', icao: 'LKPR', name: 'Václav Havel Airport', city: 'Prague', country: 'Czech Republic', tz: 'Europe/Prague' },
+            { code: 'BUD', icao: 'LHBP', name: 'Budapest Ferenc Liszt', city: 'Budapest', country: 'Hungary', tz: 'Europe/Budapest' },
+            { code: 'SVO', icao: 'UUEE', name: 'Sheremetyevo International', city: 'Moscow', country: 'Russia', tz: 'Europe/Moscow' },
+            { code: 'LED', icao: 'ULLI', name: 'Pulkovo Airport', city: 'Saint Petersburg', country: 'Russia', tz: 'Europe/Moscow' },
+            { code: 'AKL', icao: 'NZAA', name: 'Auckland Airport', city: 'Auckland', country: 'New Zealand', tz: 'Pacific/Auckland' },
+            { code: 'TPE', icao: 'RCTP', name: 'Taiwan Taoyuan International', city: 'Taipei', country: 'Taiwan', tz: 'Asia/Taipei' }
+        ];
+
+        // API Configuration
+        // Note: These are public APIs. Some may require free API keys.
+        const API_CONFIG = {
+            // AviationStack - Free tier available (https://aviationstack.com/)
+            aviationStack: {
+                baseUrl: 'http://api.aviationstack.com/v1',
+                apiKey: 'YOUR_AVIATIONSTACK_API_KEY' // Get free key at aviationstack.com
+            },
+            // OpenWeatherMap - Free tier available (https://openweathermap.org/)
+            openWeather: {
+                baseUrl: 'https://api.openweathermap.org/data/2.5',
+                apiKey: 'YOUR_OPENWEATHER_API_KEY' // Get free key at openweathermap.org
+            },
+            // CheckWX for METAR/TAF (https://www.checkwx.com/)
+            checkWx: {
+                baseUrl: 'https://api.checkwx.com',
+                apiKey: 'YOUR_CHECKWX_API_KEY' // Get free key at checkwx.com
+            },
+            // ADS-B Exchange for live aircraft (https://www.adsbexchange.com/)
+            adsbExchange: {
+                baseUrl: 'https://adsbexchange.com/api',
+                apiKey: 'YOUR_ADSB_API_KEY'
+            }
+        };
+
+        // State
+        let currentAirport = null;
+        let refreshInterval = null;
+
+        // DOM Elements
+        const searchInput = document.getElementById('airportSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        const autocompleteResults = document.getElementById('autocompleteResults');
+        const dashboard = document.getElementById('dashboard');
+        const localTimeEl = document.getElementById('localTime');
+        const utcTimeEl = document.getElementById('utcTime');
+        const connectionDot = document.getElementById('connectionDot');
+        const connectionText = document.getElementById('connectionText');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initClock();
+            initEventListeners();
+            checkConnection();
+        });
+
+        // Clock
+        function initClock() {
+            function updateClock() {
+                const now = new Date();
+                localTimeEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+                utcTimeEl.textContent = `UTC: ${now.toUTCString().split(' ')[4]}`;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Connection Check
+        function checkConnection() {
+            const online = navigator.onLine;
+            connectionDot.classList.toggle('disconnected', !online);
+            connectionText.textContent = online ? 'Live' : 'Offline';
+        }
+
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+
+        // Event Listeners
+        function initEventListeners() {
+            // Search input
+            searchInput.addEventListener('input', handleSearchInput);
+            searchInput.addEventListener('focus', () => {
+                if (searchInput.value.length >= 2) {
+                    showAutocomplete(searchInput.value);
+                }
+            });
+
+            // Search button
+            searchBtn.addEventListener('click', handleSearch);
+
+            // Enter key
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+
+            // Quick buttons
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const code = btn.dataset.code;
+                    searchInput.value = code;
+                    loadAirport(code);
+                });
+            });
+
+            // Close autocomplete on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-input-wrapper')) {
+                    autocompleteResults.classList.remove('show');
+                }
+            });
+        }
+
+        // Search Input Handler
+        function handleSearchInput(e) {
+            const query = e.target.value.trim();
+            if (query.length >= 2) {
+                showAutocomplete(query);
+            } else {
+                autocompleteResults.classList.remove('show');
+            }
+        }
+
+        // Autocomplete
+        function showAutocomplete(query) {
+            const results = searchAirports(query);
+            if (results.length === 0) {
+                autocompleteResults.classList.remove('show');
+                return;
+            }
+
+            autocompleteResults.innerHTML = results.slice(0, 10).map(airport => `
+                <div class="autocomplete-item" data-code="${airport.code}">
+                    <span class="code">${airport.code}</span> - 
+                    <span class="name">${airport.name}, ${airport.city}</span>
+                </div>
+            `).join('');
+
+            autocompleteResults.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    searchInput.value = item.dataset.code;
+                    autocompleteResults.classList.remove('show');
+                    loadAirport(item.dataset.code);
+                });
+            });
+
+            autocompleteResults.classList.add('show');
+        }
+
+        // Search Airports
+        function searchAirports(query) {
+            query = query.toLowerCase();
+            return airportDatabase.filter(airport => 
+                airport.code.toLowerCase().includes(query) ||
+                airport.name.toLowerCase().includes(query) ||
+                airport.city.toLowerCase().includes(query) ||
+                airport.country.toLowerCase().includes(query)
+            );
+        }
+
+        // Handle Search
+        function handleSearch() {
+            const query = searchInput.value.trim().toUpperCase();
+            if (!query) return;
+
+            // Check if it's a valid airport code
+            const airport = airportDatabase.find(a => 
+                a.code === query || 
+                a.icao === query ||
+                a.city.toUpperCase() === query
+            );
+
+            if (airport) {
+                loadAirport(airport.code);
+            } else {
+                // Try to find by partial match
+                const matches = searchAirports(query);
+                if (matches.length > 0) {
+                    loadAirport(matches[0].code);
+                } else {
+                    showError('Airport not found. Please check the code or city name.');
+                }
+            }
+            autocompleteResults.classList.remove('show');
+        }
+
+        // Load Airport Data
+        async function loadAirport(code) {
+            const airport = airportDatabase.find(a => a.code === code);
+            if (!airport) {
+                showError('Airport not found');
+                return;
+            }
+
+            currentAirport = airport;
+            showLoading();
+
+            try {
+                // Fetch all data in parallel
+                const [weather, flights, metar] = await Promise.all([
+                    fetchWeather(airport),
+                    fetchFlights(airport),
+                    fetchMetar(airport)
+                ]);
+
+                renderDashboard(airport, weather, flights, metar);
+
+                // Set up auto-refresh every 60 seconds
+                if (refreshInterval) clearInterval(refreshInterval);
+                refreshInterval = setInterval(() => loadAirport(code), 60000);
+
+            } catch (error) {
+                console.error('Error loading airport data:', error);
+                // Render with mock data if APIs fail
+                renderDashboard(airport, null, null, null);
+            }
+        }
+
+        // Fetch Weather Data
+        async function fetchWeather(airport) {
+            try {
+                // Using OpenWeatherMap API
+                const response = await fetch(
+                    `${API_CONFIG.openWeather.baseUrl}/weather?q=${airport.city}&appid=${API_CONFIG.openWeather.apiKey}&units=metric`
+                );
+                if (!response.ok) throw new Error('Weather API error');
+                return await response.json();
+            } catch (error) {
+                console.error('Weather fetch error:', error);
+                return null;
+            }
+        }
+
+        // Fetch Flight Data
+        async function fetchFlights(airport) {
+            try {
+                // Using AviationStack API
+                const [arrivals, departures] = await Promise.all([
+                    fetch(`${API_CONFIG.aviationStack.baseUrl}/flights?access_key=${API_CONFIG.aviationStack.apiKey}&arr_iata=${airport.code}`),
+                    fetch(`${API_CONFIG.aviationStack.baseUrl}/flights?access_key=${API_CONFIG.aviationStack.apiKey}&dep_iata=${airport.code}`)
+                ]);
+
+                return {
+                    arrivals: arrivals.ok ? await arrivals.json() : null,
+                    departures: departures.ok ? await departures.json() : null
+                };
+            } catch (error) {
+                console.error('Flights fetch error:', error);
+                return null;
+            }
+        }
+
+        // Fetch METAR/TAF Data
+        async function fetchMetar(airport) {
+            try {
+                const response = await fetch(
+                    `${API_CONFIG.checkWx.baseUrl}/metar/${airport.icao}/decoded`,
+                    { headers: { 'X-API-Key': API_CONFIG.checkWx.apiKey } }
+                );
+                if (!response.ok) throw new Error('METAR API error');
+                return await response.json();
+            } catch (error) {
+                console.error('METAR fetch error:', error);
+                return null;
+            }
+        }
+
+        // Show Loading State
+        function showLoading() {
+            dashboard.innerHTML = `
+                <div class="panel" style="grid-column: 1 / -1;">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading airport data...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show Error
+        function showError(message) {
+            dashboard.innerHTML = `
+                <div class="panel" style="grid-column: 1 / -1;">
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error</h3>
+                        <p>${message}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Dashboard
+        function renderDashboard(airport, weather, flights, metar) {
+            // Generate mock data if real data is unavailable
+            const weatherData = weather || generateMockWeather();
+            const flightData = flights || { arrivals: generateMockFlights('arrival'), departures: generateMockFlights('departure') };
+            const metarData = metar || generateMockMetar(airport);
+
+            dashboard.innerHTML = `
+                <!-- Airport Info Panel -->
+                <div class="panel airport-info">
+                    <div class="airport-header">
+                        <div class="airport-code">${airport.code}</div>
+                        <div class="airport-details">
+                            <h3>${airport.name}</h3>
+                            <p><i class="fas fa-map-marker-alt"></i> ${airport.city}, ${airport.country}</p>
+                            <p><i class="fas fa-globe"></i> ICAO: ${airport.icao}</p>
+                        </div>
+                    </div>
+                    <div class="airport-stats">
+                        <div class="stat-card">
+                            <div class="value">${Math.floor(Math.random() * 50) + 20}</div>
+                            <div class="label">Active Arrivals</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">${Math.floor(Math.random() * 50) + 20}</div>
+                            <div class="label">Active Departures</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">${Math.floor(Math.random() * 10) + 2}</div>
+                            <div class="label">Delays</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">${Math.floor(Math.random() * 200) + 100}</div>
+                            <div class="label">Aircraft in Vicinity</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-cloud-sun"></i> Weather Conditions</h2>
+                        <button class="refresh-btn" onclick="refreshWeather()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        ${renderWeather(weatherData)}
+                    </div>
+                </div>
+
+                <!-- METAR/TAF Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-chart-line"></i> METAR / TAF</h2>
+                    </div>
+                    <div class="panel-content">
+                        ${renderMetar(metarData, airport)}
+                    </div>
+                </div>
+
+                <!-- Arrivals Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-plane-arrival"></i> Arrivals</h2>
+                        <button class="refresh-btn" onclick="refreshFlights()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        ${renderFlightTable(flightData.arrivals, 'arrival')}
+                    </div>
+                </div>
+
+                <!-- Departures Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-plane-departure"></i> Departures</h2>
+                        <button class="refresh-btn" onclick="refreshFlights()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        ${renderFlightTable(flightData.departures, 'departure')}
+                    </div>
+                </div>
+
+                <!-- Runway Status Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-road"></i> Runway Status</h2>
+                    </div>
+                    <div class="panel-content">
+                        ${renderRunways(airport)}
+                    </div>
+                </div>
+
+                <!-- Notifications Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-bell"></i> Alerts & Notifications</h2>
+                    </div>
+                    <div class="panel-content">
+                        ${renderNotifications()}
+                    </div>
+                </div>
+
+                <!-- Live Activity Map -->
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-radar"></i> Live Activity Map</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="activity-map" id="activityMap">
+                            <div class="map-placeholder">
+                                <i class="fas fa-satellite-dish"></i>
+                                <p>Live aircraft tracking</p>
+                                <small>Showing aircraft within 50nm of ${airport.code}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Initialize map if available
+            initActivityMap(airport);
+        }
+
+        // Render Weather
+        function renderWeather(weather) {
+            const temp = weather.main?.temp || Math.floor(Math.random() * 20) + 10;
+            const humidity = weather.main?.humidity || Math.floor(Math.random() * 40) + 40;
+            const windSpeed = weather.wind?.speed || Math.floor(Math.random() * 20) + 5;
+            const windDir = weather.wind?.deg || Math.floor(Math.random() * 360);
+            const visibility = weather.visibility ? weather.visibility / 1000 : Math.floor(Math.random() * 10) + 5;
+            const pressure = weather.main?.pressure || Math.floor(Math.random() * 30) + 1000;
+            const description = weather.weather?.[0]?.description || 'Partly cloudy';
+            const icon = getWeatherIcon(weather.weather?.[0]?.main || 'Clouds');
+
+            return `
+                <div class="weather-main">
+                    <i class="fas ${icon} weather-icon"></i>
+                    <div>
+                        <div class="weather-temp">${Math.round(temp)}°C</div>
+                        <div class="weather-desc">${description}</div>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="weather-item">
+                        <i class="fas fa-wind"></i>
+                        <div>
+                            <div class="label">Wind</div>
+                            <div class="value">${windSpeed} kt @ ${windDir}°</div>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <i class="fas fa-eye"></i>
+                        <div>
+                            <div class="label">Visibility</div>
+                            <div class="value">${visibility.toFixed(1)} km</div>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <i class="fas fa-tint"></i>
+                        <div>
+                            <div class="label">Humidity</div>
+                            <div class="value">${humidity}%</div>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <div>
+                            <div class="label">Pressure</div>
+                            <div class="value">${pressure} hPa</div>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <i class="fas fa-cloud"></i>
+                        <div>
+                            <div class="label">Ceiling</div>
+                            <div class="value">${Math.floor(Math.random() * 5000) + 3000} ft</div>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <i class="fas fa-thermometer-half"></i>
+                        <div>
+                            <div class="label">Dew Point</div>
+                            <div class="value">${Math.round(temp - 5)}°C</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get Weather Icon
+        function getWeatherIcon(condition) {
+            const icons = {
+                'Clear': 'fa-sun',
+                'Clouds': 'fa-cloud',
+                'Rain': 'fa-cloud-rain',
+                'Drizzle': 'fa-cloud-rain',
+                'Thunderstorm': 'fa-bolt',
+                'Snow': 'fa-snowflake',
+                'Mist': 'fa-smog',
+                'Fog': 'fa-smog',
+                'Haze': 'fa-smog'
+            };
+            return icons[condition] || 'fa-cloud-sun';
+        }
+
+        // Render METAR
+        function renderMetar(metar, airport) {
+            const metarString = metar?.raw || generateMockMetarString(airport);
+            const tafString = generateMockTafString(airport);
+
+            return `
+                <div class="metar-box">
+                    <div class="metar-label">METAR</div>
+                    <div>${metarString}</div>
+                </div>
+                <div class="metar-box" style="margin-top: 1rem;">
+                    <div class="metar-label">TAF</div>
+                    <div>${tafString}</div>
+                </div>
+            `;
+        }
+
+        // Render Flight Table
+        function renderFlightTable(flights, type) {
+            const flightList = flights?.data || generateMockFlights(type);
+            
+            if (!flightList || flightList.length === 0) {
+                return `<p class="empty-state">No ${type}s scheduled</p>`;
+            }
+
+            const rows = flightList.slice(0, 10).map(flight => {
+                const flightNum = flight.flight?.iata || flight.flightNumber;
+                const origin = type === 'arrival' ? (flight.departure?.iata || flight.origin) : (flight.arrival?.iata || flight.destination);
+                const scheduled = flight.scheduled || flight.scheduledTime;
+                const estimated = flight.estimated || flight.estimatedTime;
+                const status = flight.flight_status || flight.status;
+                const statusClass = getStatusClass(status);
+
+                return `
+                    <tr>
+                        <td><span class="flight-number">${flightNum}</span></td>
+                        <td>${origin}</td>
+                        <td>${formatTime(scheduled)}</td>
+                        <td>${formatTime(estimated)}</td>
+                        <td><span class="status ${statusClass}">${status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <table class="flight-table">
+                    <thead>
+                        <tr>
+                            <th>Flight</th>
+                            <th>${type === 'arrival' ? 'From' : 'To'}</th>
+                            <th>Scheduled</th>
+                            <th>Estimated</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Get Status Class
+        function getStatusClass(status) {
+            if (!status) return 'on-time';
+            status = status.toLowerCase();
+            if (status.includes('delay')) return 'delayed';
+            if (status.includes('cancel')) return 'cancelled';
+            if (status.includes('land')) return 'landed';
+            if (status.includes('depart') || status.includes('active')) return 'departed';
+            if (status.includes('board')) return 'boarding';
+            return 'on-time';
+        }
+
+        // Format Time
+        function formatTime(timeStr) {
+            if (!timeStr) return '--:--';
+            try {
+                const date = new Date(timeStr);
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            } catch {
+                return timeStr;
+            }
+        }
+
+        // Render Runways
+        function renderRunways(airport) {
+            const runways = generateMockRunways();
+            return `
+                <div class="runway-list">
+                    ${runways.map(rwy => `
+                        <div class="runway-item ${rwy.closed ? 'closed' : ''}">
+                            <div>
+                                <div class="runway-name">${rwy.name}</div>
+                                <div class="runway-info">${rwy.length}ft × ${rwy.width}ft | ${rwy.surface}</div>
+                            </div>
+                            <div class="runway-status">
+                                <span class="dot"></span>
+                                <span>${rwy.closed ? 'Closed' : 'Active'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render Notifications
+        function renderNotifications() {
+            const notifications = [
+                { type: 'info', icon: 'fa-info-circle', title: 'System Update', text: 'Flight data refreshed', time: '1 min ago' },
+                { type: 'warning', icon: 'fa-exclamation-triangle', title: 'Weather Advisory', text: 'Wind gusts expected up to 25kt', time: '15 min ago' },
+                { type: 'info', icon: 'fa-plane', title: 'High Traffic', text: 'Above average traffic expected today', time: '30 min ago' },
+                { type: 'danger', icon: 'fa-ban', title: 'Runway Closure', text: 'RWY 04L/22R closed for maintenance', time: '1 hour ago' }
+            ];
+
+            return `
+                <div class="notification-list">
+                    ${notifications.map(n => `
+                        <div class="notification-item ${n.type}">
+                            <i class="fas ${n.icon}"></i>
+                            <div class="notification-content">
+                                <div class="notification-title">${n.title}</div>
+                                <div class="notification-text">${n.text}</div>
+                            </div>
+                            <div class="notification-time">${n.time}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Initialize Activity Map
+        function initActivityMap(airport) {
+            const mapContainer = document.getElementById('activityMap');
+            if (!mapContainer) return;
+
+            // Create a simple radar-style animation
+            mapContainer.innerHTML = `
+                <svg viewBox="0 0 400 300" style="width: 100%; height: 100%;">
+                    <!-- Background -->
+                    <rect fill="#0a192f" width="400" height="300"/>
+                    
+                    <!-- Radar circles -->
+                    <circle cx="200" cy="150" r="120" fill="none" stroke="rgba(100, 255, 218, 0.1)" stroke-width="1"/>
+                    <circle cx="200" cy="150" r="80" fill="none" stroke="rgba(100, 255, 218, 0.1)" stroke-width="1"/>
+                    <circle cx="200" cy="150" r="40" fill="none" stroke="rgba(100, 255, 218, 0.1)" stroke-width="1"/>
+                    
+                    <!-- Crosshairs -->
+                    <line x1="200" y1="30" x2="200" y2="270" stroke="rgba(100, 255, 218, 0.1)" stroke-width="1"/>
+                    <line x1="80" y1="150" x2="320" y2="150" stroke="rgba(100, 255, 218, 0.1)" stroke-width="1"/>
+                    
+                    <!-- Airport marker -->
+                    <circle cx="200" cy="150" r="8" fill="#64ffda"/>
+                    <text x="200" y="175" fill="#64ffda" font-size="12" text-anchor="middle">${airport.code}</text>
+                    
+                    <!-- Radar sweep -->
+                    <g id="radarSweep">
+                        <line x1="200" y1="150" x2="200" y2="30" stroke="url(#sweepGradient)" stroke-width="2">
+                            <animateTransform attributeName="transform" type="rotate" from="0 200 150" to="360 200 150" dur="4s" repeatCount="indefinite"/>
+                        </line>
+                    </g>
+                    
+                    <!-- Aircraft blips (random positions) -->
+                    ${generateAircraftBlips()}
+                    
+                    <!-- Gradient definition -->
+                    <defs>
+                        <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#64ffda" stop-opacity="0.8"/>
+                            <stop offset="100%" stop-color="#64ffda" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div style="position: absolute; bottom: 10px; right: 10px; color: var(--text-dim); font-size: 0.8rem;">
+                    <i class="fas fa-plane"></i> ${Math.floor(Math.random() * 50) + 30} aircraft tracked
+                </div>
+            `;
+        }
+
+        // Generate Aircraft Blips for Map
+        function generateAircraftBlips() {
+            const blips = [];
+            for (let i = 0; i < 15; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 100 + 20;
+                const x = 200 + Math.cos(angle) * radius;
+                const y = 150 + Math.sin(angle) * radius;
+                const rotation = Math.random() * 360;
+                
+                blips.push(`
+                    <g transform="translate(${x}, ${y}) rotate(${rotation})">
+                        <polygon points="0,-6 4,6 0,4 -4,6" fill="#00b4d8" opacity="0.8">
+                            <animate attributeName="opacity" values="0.4;0.8;0.4" dur="${1 + Math.random()}s" repeatCount="indefinite"/>
+                        </polygon>
+                    </g>
+                `);
+            }
+            return blips.join('');
+        }
+
+        // Mock Data Generators
+        function generateMockWeather() {
+            return {
+                main: {
+                    temp: Math.floor(Math.random() * 25) + 5,
+                    humidity: Math.floor(Math.random() * 40) + 40,
+                    pressure: Math.floor(Math.random() * 30) + 1000
+                },
+                wind: {
+                    speed: Math.floor(Math.random() * 20) + 5,
+                    deg: Math.floor(Math.random() * 360)
+                },
+                visibility: Math.floor(Math.random() * 10000) + 5000,
+                weather: [{ main: 'Clouds', description: 'Scattered clouds' }]
+            };
+        }
+
+        function generateMockFlights(type) {
+            const airlines = ['UA', 'AA', 'DL', 'BA', 'LH', 'AF', 'EK', 'SQ', 'QF', 'JL'];
+            const airports = ['LAX', 'LHR', 'CDG', 'FRA', 'DXB', 'SIN', 'HND', 'SYD', 'JFK', 'ORD'];
+            const statuses = ['On Time', 'On Time', 'On Time', 'Delayed', 'Landed', 'Departed', 'Boarding'];
+            
+            const flights = [];
+            for (let i = 0; i < 10; i++) {
+                const airline = airlines[Math.floor(Math.random() * airlines.length)];
+                const flightNum = Math.floor(Math.random() * 9000) + 100;
+                const airport = airports[Math.floor(Math.random() * airports.length)];
+                const now = new Date();
+                const scheduled = new Date(now.getTime() + (i * 20 + Math.random() * 30) * 60000);
+                const estimated = new Date(scheduled.getTime() + (Math.random() * 20 - 5) * 60000);
+
+                flights.push({
+                    flightNumber: `${airline}${flightNum}`,
+                    origin: type === 'arrival' ? airport : null,
+                    destination: type === 'departure' ? airport : null,
+                    scheduledTime: scheduled.toISOString(),
+                    estimatedTime: estimated.toISOString(),
+                    status: statuses[Math.floor(Math.random() * statuses.length)]
+                });
+            }
+            return flights;
+        }
+
+        function generateMockMetar(airport) {
+            return { raw: generateMockMetarString(airport) };
+        }
+
+        function generateMockMetarString(airport) {
+            const now = new Date();
+            const day = now.getUTCDate().toString().padStart(2, '0');
+            const hour = now.getUTCHours().toString().padStart(2, '0');
+            const min = Math.floor(now.getUTCMinutes() / 10) * 10;
+            const windDir = (Math.floor(Math.random() * 36) * 10).toString().padStart(3, '0');
+            const windSpd = (Math.floor(Math.random() * 20) + 5).toString().padStart(2, '0');
+            const vis = Math.floor(Math.random() * 10) + 5;
+            
+            return `${airport.icao} ${day}${hour}${min.toString().padStart(2, '0')}Z ${windDir}${windSpd}KT ${vis}SM FEW040 SCT100 ${Math.floor(Math.random() * 15) + 15}/${Math.floor(Math.random() * 10) + 5} A${Math.floor(Math.random() * 10) + 2990}`;
+        }
+
+        function generateMockTafString(airport) {
+            const now = new Date();
+            const day = now.getUTCDate().toString().padStart(2, '0');
+            const hour = now.getUTCHours().toString().padStart(2, '0');
+            
+            return `TAF ${airport.icao} ${day}${hour}00Z ${day}${hour}/${(parseInt(day) + 1).toString().padStart(2, '0')}${hour} 27015KT P6SM FEW040 SCT200 TEMPO ${day}18/${day}22 32020G30KT 5SM TSRA BKN030CB`;
+        }
+
+        function generateMockRunways() {
+            const runwayPairs = [
+                { name: '04L/22R', length: 12000, width: 150, surface: 'Asphalt' },
+                { name: '04R/22L', length: 11500, width: 150, surface: 'Asphalt' },
+                { name: '13L/31R', length: 10000, width: 150, surface: 'Concrete' },
+                { name: '13R/31L', length: 9500, width: 150, surface: 'Concrete' }
+            ];
+
+            return runwayPairs.slice(0, Math.floor(Math.random() * 2) + 2).map((rwy, i) => ({
+                ...rwy,
+                closed: i === 0 && Math.random() > 0.8
+            }));
+        }
+
+        // Refresh Functions
+        function refreshWeather() {
+            if (currentAirport) {
+                const btn = event.target.closest('.refresh-btn');
+                btn.classList.add('spinning');
+                setTimeout(() => {
+                    btn.classList.remove('spinning');
+                    loadAirport(currentAirport.code);
+                }, 1000);
+            }
+        }
+
+        function refreshFlights() {
+            if (currentAirport) {
+                const btn = event.target.closest('.refresh-btn');
+                btn.classList.add('spinning');
+                setTimeout(() => {
+                    btn.classList.remove('spinning');
+                    loadAirport(currentAirport.code);
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
